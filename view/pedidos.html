@@ -93,6 +93,17 @@
                         <h3 class="h4 mb-0">Pedidos</h3>
                         <p class="text-muted small">Gerenciar pedidos cadastrados no sistema</p>
                     </div>
+                       <!-- BUSCA ADICIONADA -->
+    <div class="input-group" style="max-width: 320px;">
+        <span class="input-group-text bg-white border-end-0">
+            <i class="fa-solid fa-magnifying-glass text-muted"></i>
+        </span>
+        <input type="text" id="busca-pedido" class="form-control border-start-0"
+               placeholder="Buscar pedido por número..."
+               oninput="filtrarPedidos()">
+    </div>
+
+
                     <button class="btn btn-dark btn-save" data-bs-toggle="modal" data-bs-target="#modalPedido" onclick="prepararNovoPedido()">
                         <i class="fa-solid fa-plus me-2"></i> Novo Pedido
                     </button>

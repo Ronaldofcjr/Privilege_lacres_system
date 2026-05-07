@@ -21,9 +21,85 @@ function showToast(message, type = "success") {
     const bsToast = new bootstrap.Toast(toast);
     bsToast.show();
 }
-// LISTAGEM DE PEDIDOS (READ)
+
+// ============================================================
+// VARIÁVEL GLOBAL — guarda todos os pedidos carregados da API
+// ============================================================
+let todosPedidos = [];
 let pedidoParaDeletar = null;
 
+
+// ============================================================
+// LISTAGEM — busca os pedidos na API e renderiza na tabela
+// ============================================================
+async function listarPedidos() {
+    try {
+        const response = await fetchAuth(`/pedidos`);
+        if (!response) return;
+
+        // Salva na variável global para o filtro poder usar depois
+        todosPedidos = await response.json();
+
+        // Renderiza todos os pedidos (sem filtro)
+        renderizarPedidos(todosPedidos);
+    } catch (error) {
+        console.error("Erro ao listar pedidos:", error);
+    }
+}
+
+
+// ============================================================
+// RENDERIZAÇÃO — recebe uma lista e monta as linhas da tabela
+// (separado do listarPedidos para poder ser chamado pelo filtro)
+// ============================================================
+function renderizarPedidos(pedidos) {
+    const corpoTabela = document.getElementById('tabela-pedidos-corpo');
+    corpoTabela.innerHTML = '';
+
+    pedidos.forEach(p => {
+        const totalCalculado = p.total_pedido || 0;
+
+        const statusClass = p.status === 'Pendente' ? 'bg-warning text-dark' :
+                            p.status === 'Em Produção' ? 'bg-primary' : 'bg-success';
+
+        corpoTabela.innerHTML += `
+            <tr>
+                <td class="fw-bold">${p.numero_pedido}</td>
+                <td class="fw-bold text-primary">${p.empresa}</td>
+                <td>${p.data}</td>
+                <td><span class="badge ${statusClass} px-3">${p.status}</span></td>
+                <td class="text-end fw-bold text-dark">R$ ${totalCalculado.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                <td class="text-center">
+                    <button class="btn btn-link text-success text-decoration-none small" onclick="editarPedido(${p.pedido_id})">
+                        <i class="fa-solid fa-pen me-1"></i>
+                    </button>
+                    <button class="btn btn-link text-danger text-decoration-none small" onclick="excluirPedido(${p.pedido_id})">
+                        <i class="fa-solid fa-trash me-1"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+    });
+}
+
+
+// ============================================================
+// FILTRO — chamado pelo oninput do campo de busca no HTML
+// ============================================================
+function filtrarPedidos() {
+    const termo = document.getElementById('busca-pedido').value.toLowerCase().trim();
+
+    const filtrados = todosPedidos.filter(p =>
+        p.numero_pedido.toLowerCase().includes(termo)
+    );
+
+    renderizarPedidos(filtrados);
+}
+
+
+// ============================================================
+// DELETAR PEDIDO
+// ============================================================
 async function excluirPedido(id) {
     pedidoParaDeletar = id;
 
@@ -56,46 +132,10 @@ async function excluirPedido(id) {
     });
 }
 
-async function listarPedidos() {
-    try {
-        const response = await fetchAuth(`/pedidos`);
-        if (!response) return;
 
-        const pedidos = await response.json();
-        
-        const corpoTabela = document.getElementById('tabela-pedidos-corpo');
-        corpoTabela.innerHTML = '';
-
-        pedidos.forEach(p => {
-            const totalCalculado = p.total_pedido || 0;
-            
-            const statusClass = p.status === 'Pendente' ? 'bg-warning text-dark' : 
-                                p.status === 'Em Produção' ? 'bg-primary' : 'bg-success';
-
-            corpoTabela.innerHTML += `
-                <tr>
-                    <td class="fw-bold">${p.numero_pedido}</td>
-                    <td class="fw-bold text-primary">${p.empresa}</td>
-                    <td>${p.data}</td>
-                    <td><span class="badge ${statusClass} px-3">${p.status}</span></td>
-                    <td class="text-end fw-bold text-dark">R$ ${totalCalculado.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
-                    <td class="text-center">
-                        <button class="btn btn-link text-success text-decoration-none small" onclick="editarPedido(${p.pedido_id})">
-                            <i class="fa-solid fa-pen me-1"></i>
-                        </button>
-                        <button class="btn btn-link text-danger text-decoration-none small" onclick="excluirPedido(${p.pedido_id})">
-                            <i class="fa-solid fa-trash me-1"></i>
-                        </button>
-                    </td>
-                </tr>
-            `;
-        });
-    } catch (error) {
-        console.error("Erro ao listar pedidos:", error);
-    }
-}
-
+// ============================================================
 // ITENS DINÂMICOS
+// ============================================================
 function adicionarLinhaItem(dados = {}) {
     const container = document.getElementById('container-itens');
     const idLinha = Date.now();
@@ -103,7 +143,7 @@ function adicionarLinhaItem(dados = {}) {
     const div = document.createElement('div');
     div.className = 'row g-2 mb-2 align-items-end item-row';
     div.id = `item-${idLinha}`;
-    
+
     div.innerHTML = `
         <div class="col-md-6">
             <label class="form-label small fw-bold">Produto</label>
@@ -123,7 +163,7 @@ function adicionarLinhaItem(dados = {}) {
             </button>
         </div>
     `;
-    
+
     container.appendChild(div);
 }
 
@@ -132,11 +172,14 @@ function removerLinhaItem(id) {
     calcularTotalPedido();
 }
 
+
+// ============================================================
 // TOTAL
+// ============================================================
 function calcularTotalPedido() {
     let totalGeral = 0;
     const linhas = document.querySelectorAll('.item-row');
-    
+
     linhas.forEach(linha => {
         const qtd = parseFloat(linha.querySelector('.campo-quantidade').value) || 0;
         const valor = parseFloat(linha.querySelector('.campo-valor').value) || 0;
@@ -147,10 +190,13 @@ function calcularTotalPedido() {
         `R$ ${totalGeral.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
 }
 
+
+// ============================================================
 // SALVAR PEDIDO
+// ============================================================
 async function salvarPedidoCompleto() {
     const id = document.getElementById('pedido_id').value;
-    
+
     const itens = Array.from(document.querySelectorAll('.item-row')).map(linha => ({
         produto: linha.querySelector('.campo-produto').value,
         quantidade: parseFloat(linha.querySelector('.campo-quantidade').value),
@@ -192,7 +238,10 @@ async function salvarPedidoCompleto() {
     }
 }
 
+
+// ============================================================
 // AUXILIARES
+// ============================================================
 function prepararNovoPedido() {
     document.getElementById('formPedido').reset();
     document.getElementById('pedido_id').value = '';
@@ -208,7 +257,7 @@ async function carregarEmpresasSelect() {
 
         const empresas = await response.json();
         const select = document.getElementById('id_empresa');
-        
+
         empresas.forEach(emp => {
             const opt = document.createElement('option');
             opt.value = emp.id_empresa;
@@ -233,14 +282,14 @@ async function editarPedido(id) {
         document.getElementById('nf').value = p.nf;
         document.getElementById('total_nf').value = p.total_nf;
         document.getElementById('status').value = p.status;
-        
-        if(p.data) document.getElementById('data').value = p.data.split('/').reverse().join('-');
-        if(p.vencimento) document.getElementById('vencimento').value = p.vencimento.split('/').reverse().join('-');
+
+        if (p.data) document.getElementById('data').value = p.data.split('/').reverse().join('-');
+        if (p.vencimento) document.getElementById('vencimento').value = p.vencimento.split('/').reverse().join('-');
 
         const container = document.getElementById('container-itens');
         container.innerHTML = '';
         p.itens.forEach(item => adicionarLinhaItem(item));
-        
+
         calcularTotalPedido();
         new bootstrap.Modal(document.getElementById('modalPedido')).show();
     } catch (error) {

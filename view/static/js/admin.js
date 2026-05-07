@@ -15,56 +15,24 @@ function showToast(message, type = "success") {
     bsToast.show();
 }
 
-// LISTAR USUÁRIOS
+// ============================================================
+// VARIÁVEL GLOBAL — guarda todos os usuários carregados da API
+// ============================================================
+let todosUsuarios = [];
+
+// ============================================================
+// LISTAGEM — busca os usuários na API e renderiza na tabela
+// ============================================================
 async function listarUsuarios() {
     try {
         const response = await fetchAuth("/usuarios");
-
         if (!response) return;
 
-        const usuarios = await response.json();
-        const tbody = document.getElementById("tabela-usuarios");
+        // Salva na variável global para o filtro poder usar depois
+        todosUsuarios = await response.json();
 
-        tbody.innerHTML = "";
-
-        usuarios.forEach(user => {
-            const badgeRole =
-                user.role === "admin"
-                    ? "bg-danger"
-                    : "bg-secondary";
-
-            tbody.innerHTML += `
-                <tr>
-                    <td class="fw-bold">${user.id_usuario}</td>
-
-                    <td>${user.name}</td>
-
-                    <td>${user.email}</td>
-
-                    <td>
-                        <span class="badge ${badgeRole}">
-                            ${user.role}
-                        </span>
-                    </td>
-
-                    <td>${user.data_cadastro}</td>
-
-                    <td class="text-center">
-
-                        <button class="btn btn-link text-success text-decoration-none small"
-                                onclick="editarUsuario(${user.id_usuario})">
-                            <i class="fa-solid fa-pen"></i>
-                        </button>
-
-                        <button class="btn btn-link text-danger text-decoration-none small"
-                                onclick="deletarUsuario(${user.id_usuario})">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
-
-                    </td>
-                </tr>
-            `;
-        });
+        // Renderiza todos os usuários (sem filtro)
+        renderizarUsuarios(todosUsuarios);
 
     } catch (error) {
         console.error("Erro ao listar usuários:", error);
@@ -72,17 +40,65 @@ async function listarUsuarios() {
     }
 }
 
+// ============================================================
+// RENDERIZAÇÃO — recebe uma lista e monta as linhas da tabela
+// ============================================================
+function renderizarUsuarios(usuarios) {
+    const tbody = document.getElementById("tabela-usuarios");
+    tbody.innerHTML = "";
+
+    usuarios.forEach(user => {
+        const badgeRole = user.role === "admin" ? "bg-danger" : "bg-secondary";
+
+        tbody.innerHTML += `
+            <tr>
+                <td class="fw-bold">${user.id_usuario}</td>
+                <td>${user.name}</td>
+                <td>${user.email}</td>
+                <td><span class="badge ${badgeRole}">${user.role}</span></td>
+                <td>${user.data_cadastro}</td>
+                <td class="text-center">
+                    <button class="btn btn-link text-success text-decoration-none small"
+                            onclick="editarUsuario(${user.id_usuario})">
+                        <i class="fa-solid fa-pen"></i>
+                    </button>
+                    <button class="btn btn-link text-danger text-decoration-none small"
+                            onclick="deletarUsuario(${user.id_usuario})">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+    });
+}
+
+// ============================================================
+// FILTRO — chamado pelo oninput do campo de busca no HTML
+// ============================================================
+function filtrarUsuarios() {
+    const termo = document.getElementById('busca-usuario').value.toLowerCase().trim();
+
+    const filtrados = todosUsuarios.filter(u =>
+        u.name.toLowerCase().includes(termo)
+    );
+
+    renderizarUsuarios(filtrados);
+}
+
+// ============================================================
 // NOVO USUÁRIO
+// ============================================================
 function novoUsuario() {
     document.getElementById("formUsuario").reset();
     document.getElementById("usuario_id").value = "";
 }
 
+// ============================================================
 // EDITAR USUÁRIO
+// ============================================================
 async function editarUsuario(id) {
     try {
         const response = await fetchAuth(`/usuarios/${id}`);
-
         if (!response) return;
 
         const data = await response.json();
@@ -94,9 +110,7 @@ async function editarUsuario(id) {
         document.getElementById("role").value = user.role;
         document.getElementById("senha").value = "";
 
-        new bootstrap.Modal(
-            document.getElementById("modalUsuario")
-        ).show();
+        new bootstrap.Modal(document.getElementById("modalUsuario")).show();
 
     } catch (error) {
         console.error("Erro ao buscar usuário:", error);
@@ -104,7 +118,9 @@ async function editarUsuario(id) {
     }
 }
 
+// ============================================================
 // SALVAR USUÁRIO
+// ============================================================
 async function salvarUsuario() {
     const id = document.getElementById("usuario_id").value;
 
@@ -127,13 +143,9 @@ async function salvarUsuario() {
         if (!response) return;
 
         if (response.ok) {
-            bootstrap.Modal
-                .getInstance(document.getElementById("modalUsuario"))
-                .hide();
-
+            bootstrap.Modal.getInstance(document.getElementById("modalUsuario")).hide();
             showToast("Usuário salvo com sucesso!", "success");
             listarUsuarios();
-
         } else {
             const data = await response.json();
             showToast(data.error || "Erro ao salvar usuário.", "danger");
@@ -145,7 +157,9 @@ async function salvarUsuario() {
     }
 }
 
+// ============================================================
 // DELETAR USUÁRIO
+// ============================================================
 let usuarioParaDeletar = null;
 
 function deletarUsuario(id) {
@@ -153,23 +167,17 @@ function deletarUsuario(id) {
 
     const modalEl = document.getElementById("confirmModalUsuario");
     const modal = new bootstrap.Modal(modalEl);
-
     modal.show();
 
     const btn = document.getElementById("confirm-delete-usuario-btn");
-
     btn.replaceWith(btn.cloneNode(true));
-
     const novoBtn = document.getElementById("confirm-delete-usuario-btn");
 
     novoBtn.addEventListener("click", async () => {
         try {
-            const response = await fetchAuth(
-                `/usuarios/${usuarioParaDeletar}`,
-                {
-                    method: "DELETE"
-                }
-            );
+            const response = await fetchAuth(`/usuarios/${usuarioParaDeletar}`, {
+                method: "DELETE"
+            });
 
             if (!response) return;
 
@@ -177,7 +185,6 @@ function deletarUsuario(id) {
                 modal.hide();
                 showToast("Usuário excluído com sucesso!", "success");
                 listarUsuarios();
-
             } else {
                 const data = await response.json();
                 showToast(data.error || "Erro ao excluir.", "danger");

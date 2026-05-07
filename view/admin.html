@@ -104,6 +104,15 @@
                             Gerenciar usuários cadastrados no sistema
                         </p>
                     </div>
+                        <div class="input-group" style="max-width: 320px;">
+        <span class="input-group-text bg-white border-end-0">
+            <i class="fa-solid fa-magnifying-glass text-muted"></i>
+        </span>
+        <input type="text" id="busca-usuario" class="form-control border-start-0"
+               placeholder="Buscar usuário por nome..."
+               oninput="filtrarUsuarios()">
+    </div>
+
 
                     <button class="btn btn-dark btn-save"
                             data-bs-toggle="modal"
