@@ -1,15 +1,14 @@
-import os
-
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.exc import OperationalError
 import time
+import os  # ← adicionar
 
 db = SQLAlchemy()
 
 def init_db(app):
     app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv(
         "DATABASE_URL",
-        "mysql+mysqlconnector://root:root@mysql57:3306/privilege_management"
+        "mysql+mysqlconnector://root:root@mysql57:3306/privilege_management"  # fallback local
     )
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -17,7 +16,7 @@ def init_db(app):
 
     with app.app_context():
         conectado = False
-        for i in range(15):  # tenta por ~45 segundos
+        for i in range(15):
             try:
                 db.create_all()
                 print("✅ Banco conectado e tabelas criadas!")
