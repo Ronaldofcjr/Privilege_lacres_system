@@ -6,6 +6,12 @@ import os  # ← adicionar
 db = SQLAlchemy()
 
 def init_db(app):
+    uri = os.getenv("DATABASE_URL", "NAO_ENCONTRADA")
+    print(f"🔍 DATABASE_URL recebida: {uri}")  # ← log temporário
+    
+    app.config['SQLALCHEMY_DATABASE_URI'] = uri
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    
     app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv(
         "DATABASE_URL",
         "mysql+mysqlconnector://root:root@mysql57:3306/privilege_management"  # fallback local
