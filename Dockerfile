@@ -10,4 +10,4 @@ COPY . .
 
 EXPOSE 5000
 
-CMD ["sh", "-c", "sleep 20 && python seed.py && python app.py"]
+CMD ["sh", "-c", "python seed.py && gunicorn --bind 0.0.0.0:5000 app:app"]

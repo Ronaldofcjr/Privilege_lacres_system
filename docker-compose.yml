@@ -23,8 +23,11 @@ services:
     container_name: flask_app
     ports:
       - "5000:5000"
-    volumes:
-      - .:/app
+    environment:
+      - DATABASE_URL=mysql+mysqlconnector://root:root@mysql57:3306/privilege_management
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - EMAIL=${EMAIL}
+      - PASSWORD=${PASSWORD}
     depends_on:
       mysql57:
         condition: service_healthy

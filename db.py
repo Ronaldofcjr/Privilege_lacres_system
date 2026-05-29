@@ -1,3 +1,5 @@
+import os
+
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.exc import OperationalError
 import time
@@ -5,7 +7,10 @@ import time
 db = SQLAlchemy()
 
 def init_db(app):
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:root@mysql57:3306/privilege_management'
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv(
+        "DATABASE_URL",
+        "mysql+mysqlconnector://root:root@mysql57:3306/privilege_management"
+    )
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     db.init_app(app)

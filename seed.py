@@ -11,7 +11,7 @@ def seed_user():
 
     with app.app_context():
 
-        existing_user = Usuario.query.filter_by(email="admin@email.com").first()
+        existing_user = Usuario.query.filter_by(email=os.getenv("EMAIL")).first()
         if existing_user:
             print("Usuário já existe!")
             return
