@@ -1,4 +1,5 @@
 from flask import Flask, render_template
+from flask_cors import CORS
 from db import init_db
 from datetime import timedelta
 from controller.empresa_controller import empresa_bp
@@ -12,6 +13,7 @@ def create_app():
     load_dotenv()
 
     app = Flask(__name__, template_folder="view", static_folder="view/static")
+    CORS(app)
 
     # Configuração JWT
     app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY")
